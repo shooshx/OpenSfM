@@ -35,11 +35,15 @@ class DataSet:
         # Load list of images.
         image_list_file = os.path.join(self.data_path, 'image_list.txt')
         if os.path.isfile(image_list_file):
+            print "Loading", image_list_file
             with open(image_list_file) as fin:
                 lines = fin.read().splitlines()
             self.set_image_list(lines)
+            self.files_from_user_list = True
         else:
             self.set_image_path(os.path.join(self.data_path, 'images'))
+            self.files_from_user_list = False
+
 
         # Load list of masks if they exist.
         mask_list_file = os.path.join(self.data_path, 'mask_list.txt')

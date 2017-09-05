@@ -3,6 +3,9 @@
 set -e
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+# this is needed for some google libs that are missing
+export LD_LIBRARY_PATH=$DIR/../opensfm 
+echo $LD_LIBRARY_PATH
 
 $DIR/opensfm extract_metadata $1
 $DIR/opensfm detect_features $1

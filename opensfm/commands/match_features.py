@@ -143,6 +143,24 @@ def match_candidates_by_order(images, exifs, max_neighbors):
     return pairs
 
 
+def save_pairs(data, pairs):
+    sp = {}
+    for a,b in pairs:
+        if a not in sp:
+            sp[a] = []
+        sp[a].append(b)
+    spa = []
+    for k in sorted(sp.keys()):
+        spa.append( (k, sorted(sp[k])) )
+
+    with open(data.data_path + "/pairs.txt", "w") as f:
+        f.write("%s\n" % len(spa))
+        for k,a in spa:
+            f.write("\n%s  %s\n" % (k,len(a)))
+            for v in a:
+                f.write("    %s\n" % v)
+
+
 def match_candidates_from_metadata(images, exifs, data):
     """Compute candidate matching pairs"""
     max_distance = data.config['matching_gps_distance']
@@ -161,13 +179,19 @@ def match_candidates_from_metadata(images, exifs, data):
         gps_neighbors = 0
         max_distance = 0
 
-    images.sort()
+    with open(data.data_path + "/_images.txt", "w") as f:
+	f.write('\n'.join(images))
+
+    if not data.files_from_user_list:
+        images.sort()
 
     d = match_candidates_by_distance(images, exifs, reference,
                                      gps_neighbors, max_distance)
     t = match_candidates_by_time(images, exifs, time_neighbors)
     o = match_candidates_by_order(images, exifs, order_neighbors)
     pairs = d | t | o
+    
+    save_pairs(data, pairs)
 
     res = {im: [] for im in images}
     for im1, im2 in pairs:
@@ -193,6 +217,10 @@ def match(args):
 
     im1_matches = {}
 
+    p1, f1, c1 = ctx.data.load_features(im1)
+    i1 = ctx.data.load_feature_index(im1, f1)
+
+
     for im2 in candidates:
         # preemptive matching
         if preemptive_threshold > 0:
@@ -211,8 +239,6 @@ def match(args):
 
         # symmetric matching
         t = time.time()
-        p1, f1, c1 = ctx.data.load_features(im1)
-        i1 = ctx.data.load_feature_index(im1, f1)
 
         p2, f2, c2 = ctx.data.load_features(im2)
         i2 = ctx.data.load_feature_index(im2, f2)

@@ -138,6 +138,7 @@ def load_config(filepath):
             new_config = yaml.load(fin)
         if new_config:
             for k, v in new_config.items():
+		print "Override config `%s` = `%s`" % (k,v)
                 config[k] = v
 
     return config
