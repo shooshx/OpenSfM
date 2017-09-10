@@ -171,12 +171,19 @@ def bundle_single_view(graph, reconstruction, shot_id, config):
         config.get('radial_distorsion_k1_sd', 0.01),
         config.get('radial_distorsion_k2_sd', 0.01))
 
+    setup = time.time()
+
     ba.set_num_threads(config['processes'])
     ba.run()
+    
+    run = time.time()
 
     s = ba.get_shot(str(shot_id))
     shot.pose.rotation = [s.rx, s.ry, s.rz]
     shot.pose.translation = [s.tx, s.ty, s.tz]
+
+    logger.debug('Single-Bundle run {0}'.format(run - setup))
+
 
 
 def bundle_local(graph, reconstruction, gcp, central_shot_id, config):

@@ -47,7 +47,7 @@ def detect(args):
             logger.info('Found mask to apply for image {}'.format(image))
         preemptive_max = data.config.get('preemptive_max', 200)
         p_unsorted, f_unsorted, c_unsorted = features.extract_features(
-            data.image_as_array(image), data.config, mask)
+            data.image_as_array(image), data.config, mask, image)
         if len(p_unsorted) == 0:
             return
 

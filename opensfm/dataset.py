@@ -261,6 +261,7 @@ class DataSet:
         return s['points'], descriptors, s['colors'].astype(float)
 
     def save_features(self, image, points, descriptors, colors):
+        print "Saving", self.__feature_file(image)
         self.__save_features(self.__feature_file(image), image, points, descriptors, colors)
 
     def feature_index_exists(self, image):

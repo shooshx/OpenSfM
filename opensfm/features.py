@@ -90,7 +90,7 @@ def _in_mask(point, width, height, mask):
     return mask[int(v), int(u)] != 0
 
 
-def extract_features_sift(image, config):
+def extract_features_sift(image, config, name):
     sift_edge_threshold = config.get('sift_edge_threshold', 10)
     sift_peak_threshold = float(config.get('sift_peak_threshold', 0.1))
     if context.OPENCV3:
@@ -117,7 +117,7 @@ def extract_features_sift(image, config):
         else:
             detector.setDouble("contrastThreshold", sift_peak_threshold)
         points = detector.detect(image)
-        logger.debug('Found {0} points in {1}s'.format( len(points), time.time()-t ))
+        logger.debug(name + ' Found {0} points in {1}s'.format( len(points), time.time()-t ))
         if len(points) < config.get('feature_min_frames', 0) and sift_peak_threshold > 0.0001:
             sift_peak_threshold = (sift_peak_threshold * 2) / 3
             logger.debug('reducing threshold')
@@ -130,7 +130,7 @@ def extract_features_sift(image, config):
     return points, desc
 
 
-def extract_features_surf(image, config):
+def extract_features_surf(image, config, name):
     surf_hessian_threshold = config.get('surf_hessian_threshold', 3000)
     if context.OPENCV3:
         try:
@@ -160,7 +160,7 @@ def extract_features_surf(image, config):
         else:
             detector.setDouble("hessianThreshold", surf_hessian_threshold)  # default: 0.04
         points = detector.detect(image)
-        logger.debug('Found {0} points in {1}s'.format( len(points), time.time()-t ))
+        logger.debug(name + ' Found {0} points in {1}s'.format( len(points), time.time()-t ))
         if len(points) < config.get('feature_min_frames', 0) and surf_hessian_threshold > 0.0001:
             surf_hessian_threshold = (surf_hessian_threshold * 2) / 3
             logger.debug('reducing threshold')
@@ -183,7 +183,7 @@ def akaze_descriptor_type(name):
         return d['MSURF']
 
 
-def extract_features_akaze(image, config):
+def extract_features_akaze(image, config, name):
     options = csfm.AKAZEOptions()
     options.omax = config.get('akaze_omax', 4)
     akaze_descriptor_name = config.get('akaze_descriptor', 'MSURF')
@@ -200,7 +200,7 @@ def extract_features_akaze(image, config):
     logger.debug('Computing AKAZE with threshold {0}'.format(options.dthreshold))
     t = time.time()
     points, desc = csfm.akaze(image, options)
-    logger.debug('Found {0} points in {1}s'.format( len(points), time.time()-t ))
+    logger.debug(name + ' Found {0} points in {1}s'.format( len(points), time.time()-t ))
 
     if config.get('feature_root', False):
         if akaze_descriptor_name in ["SURF_UPRIGHT", "MSURF_UPRIGHT"]:
@@ -211,7 +211,7 @@ def extract_features_akaze(image, config):
     return points, desc
 
 
-def extract_features_hahog(image, config):
+def extract_features_hahog(image, config, name):
     t = time.time()
     points, desc = csfm.hahog(image.astype(np.float32) / 255, # VlFeat expects pixel values between 0, 1
                               peak_threshold = config.get('hahog_peak_threshold', 0.003),
@@ -228,24 +228,24 @@ def extract_features_hahog(image, config):
     if config.get('hahog_normalize_to_uchar', False):
         desc = (uchar_scaling * desc).clip(0, 255).round()
 
-    logger.debug('Found {0} points in {1}s'.format( len(points), time.time()-t ))
+    logger.debug(name + ' Found {0} points in {1}s'.format( len(points), time.time()-t ))
     return points, desc
 
 
-def extract_features(color_image, config, mask=None):
+def extract_features(color_image, config, mask=None, name=None):
     assert len(color_image.shape) == 3
     color_image = resized_image(color_image, config)
     image = cv2.cvtColor(color_image, cv2.COLOR_RGB2GRAY)
 
     feature_type = config.get('feature_type','SIFT').upper()
     if feature_type == 'SIFT':
-        points, desc = extract_features_sift(image, config)
+        points, desc = extract_features_sift(image, config, name)
     elif feature_type == 'SURF':
-        points, desc = extract_features_surf(image, config)
+        points, desc = extract_features_surf(image, config, name)
     elif feature_type == 'AKAZE':
-        points, desc = extract_features_akaze(image, config)
+        points, desc = extract_features_akaze(image, config, name)
     elif feature_type == 'HAHOG':
-        points, desc = extract_features_hahog(image, config)
+        points, desc = extract_features_hahog(image, config, name)
     else:
         raise ValueError('Unknown feature type (must be SURF, SIFT, AKAZE or HAHOG)')
 
